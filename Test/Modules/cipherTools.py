@@ -8,6 +8,7 @@ BLUE = "\033[1;36m"
 MAGENTA = "\033[1;35m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
+
 class bigram():
     def __init__(self):
         self.bigramPath =  os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","bigrams.txt")
@@ -117,6 +118,7 @@ class ngrams():
         finalScore = 0.1 * biScore + 0.3 * triScore + 0.6 * quadScore
         
         return finalScore
+
 def frequencyAnalysis(string: str) -> dict:
     freqs = Counter(string)
     print(sorted(freqs.items(), key=lambda thingy: thingy[0]))
@@ -274,6 +276,7 @@ def inverseMatrixMod26(MatA: list):
 
     
     return numpy.linalg.inv(numpy.array(MatA))
+
 if __name__ == "__main__":
     MatA = [
         [1,2,3],

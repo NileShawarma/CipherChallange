@@ -15,7 +15,7 @@ MAGENTA = "\033[1;35m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
 
-from cipherTools import chiSquared, ngrams # type: ignore
+from cipherTools import chiSquared, ngrams
 
 def shuffleKey(currentKey: str) -> str:
     tempKey = list(currentKey)
@@ -45,7 +45,6 @@ def decrypt(cipherText: str, key: str) -> str:
 #Editable toggles and shit
 string = """
 FW MHLEBGY REHLH, B UHP HQ NBLPQ JEOHPOM HGM QZOG HEHLFOM QI LOROBTO WISL EOQQOL. ZHJJW IN RISLPO QI DGIU QZHQ WIS ZHTO HLLBTOM PHNOEW BG GOU WILD HGM QZOG HEHLFOM HQ WISL HRRISGQ IN QZO ASLGOM GIQO. B UHP PQSGY AW H MHLD JHGY IN COHEISPW, NOHLBGY QZHQ BQ FBYZQ AO H EOQQLO M\’HFISL. RISEM BQ AO QZO LOHPIG QZHQ ZO MBM GIQ HEEIU FO QI HRRIFJHGW ZBF QI GOU WILD? B HF JLISM QI PHW QZHQ B MBPFBPPOM QZBP UBRDOM QZISYZQ HP SGUILQZW IN SP AIQZ HGM UHP SGPSLJLBPOM QZISYZ, B FSPQ RIGNOPP, H EBQQEO LOEBOTOM QI LOHM WISL OVJEHGHQBIG IN QZO BMOGQBQW IN QZO POGMOL. QZO FWPQOLW LOFHBGP HP QI UZHQ ASPBGOPP QZO YOGOLHE ZHM UBQZ FW AOEITOM, HGM UZW ZO ZHP RZIPOG QI RIFFSGBRHQO UBQZ RZHLEOP BG RIMO. B PSJJIPO BQ FBYZQ AO RIGGORQOM UBQZ RZHLEOP’P FOOQBGY UBQZ FL AHAAHYO HGM QZO JLBFO FBGBPQOL IG QZO MHW AONILO ZO EONQ. QZO MIIL QI QZO PQSMW UHP REIPOM, ASQ TIBROP UOLO REOHLEW LHBPOM MSLBGY QZO MBPRSPPBIG HGM RZHLEOP UHP BG H QOLLBAEO FIIM HNQOLUHLMP. ZO UISEM IGEW PHW QZHQ ZO UHP “QII IEM QI AO BGTIETOM BG PDSEMSYYOLW!” BN GIQ, QZOG B PSJJIPO QZHQ QZO EOQQOL FBYZQ ZHTO RIGROLGOM QZO HRQBTBQBOP IN QZO YZIPQ RESA. BP QZHQ QII NHGRBNSE? UZBEO QZO PIRBOQW BP ZHLMEW PORLOQ, PIFO JLHRQBRHE FOG HLO MBPFBPPBTO IN HG BGQOLOPQ BG PJBLBQSHEBPF, HGM B RHG BFHYBGO QZHQ H FHG UZI ZHP FHMO ZBP LOJSQHQBIG HP HG OGYBGOOL FHW NOOE QZHQ PSRZ HG HPPIRBHQBIG UISEM MHFHYO ZBP PQHGMBGY. BP QZOLO HGW UHW QZHQ WIS RISEM HPROLQHBG QZO RIGQOGQP IN QZBP RILLOPJIGMOGRO, IL QZO GHQSLO IN QZO LOEHQBIGPZBJ AOQUOOG QZOF? B HF FIPQ RSLBISP QI EOHLG. WISLP HNNORQBIGHQOEW, OEEOG
-
 """.upper()
 
 
@@ -140,11 +139,15 @@ if __name__ == "__main__":
             temperature *= cooling_rate
             
             if (iteration + 1) % 1000 == 0: #blank screens do be scary
+
                 acceptance_rate = (accepted_moves / 1000) * 100
+
                 print(f"Iteration {iteration + 1}: Best score = {best_score:.4f}, Temp = {temperature:.4f}, Acceptance = {acceptance_rate:.1f}%, Key = {best_key}")
                 decrypted_sample = decrypt(string, best_key)[:120]
+
                 print(f"Current decryption: {decrypted_sample}...\n")
                 accepted_moves = 0
+
             elif (iteration+1) % 250 == 0 and (iteration+1) // 250 <5:
                 print(f"Iteration {iteration + 1}: Best score = {best_score:.4f}, Temp = {temperature:.4f}, Key = {best_key}")
                 decrypted_sample = decrypt(string, best_key)[:120]
