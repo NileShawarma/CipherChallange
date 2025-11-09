@@ -6,18 +6,21 @@ script_dir = os.path.dirname(__file__)
 modulesPath = os.path.join(script_dir,"..","..","Test","Modules")
 sys.path.append(modulesPath)
 
+import cipherTools
 from cipherTools import Affineshift,recommendedShiftChiSquared # type: ignore
 
 #Editable toggles and shit
 string = """
-PZ ORFE XERSQDMMR, D PNHK FYVMVXDHR UVE LAFEMRH, AR DH F XVVO PFS, INK LFS IR DEFHLDIMR, FSO KEFQRM ERFMMZ OVRH SVK HNDK ADP. D ERFO ADH MRKKRE KV ZVN TDKA HVPR LVSLRES (KAFSJ ZVN UVE HRSODSX PR F LVYZ), HRRDSX KAFK DK ORPVSHKEFKRH F MVTSRHH DS ADH HYDEKH, INK D LFS FHHNER ZVN KAFK AR DSKRSOH VSMZ KAR IRHK UVE VNE RSORFQVNE. DK KVVJ KAR LVPIDSRO RUUVEKH VU PZHRMU FSO MVEO OREIZ KV LVSQDSLR ADP VU KAR EDXAKSRHH VU VNE YMFS, INK TADMR AR DH UNMMZ LVPPDKKRO KV VNE LFNHR, AR DH SVK RSKDERMZ FK RFHR TDKA VNE PRKAVOH. D AFQR LVSKDSNRO KV HVMDLDK HNYYVEK UVE ZVNE YEVYVHFM VS KADH HDOR VU KAR FKMFSKDL, FSO D FP LVSUDORSK KAFK PZ VTS HPFMM LVSKEDINKDVS LFS YMFZ FS DPYVEKFSK YFEK DS DKH HNLLRHH. D KENHK KAFK ZVNE XEVNY ERPFDSH LVSUDORSK KAFK DK LFS ORMDQRE VS DKH YEVPDHR. TDKA KAR HNYYVEK VU KAR IEDKDHA FSO FPREDLFS XVQRESPRSKH D KADSJ TR LVNMO INDMO HVPRKADSX RSKDERMZ SRT FSO RWKERPRMZ YVTREUNM, AVTRQRE KAR KENR YVKRSKDFM LFS VSMZ IR PRK DU TR LFS RSHNER KVKFM HRLERLZ, FSO D TDMM AFQR KV ERMZ VS ZVN KV YREHNFOR LAFEMRH SVK KV HYRFJ VU VNE ORHDXSH TDKA FSZVSR VNKHDOR VU VNE LDELMR. UVE ADH VTS YFEK, LAFEMRH DH LADRUMZ DSKRERHKRO DS KAR HNLLRHH VU ADH KVNE, FSO TADMR AR TDMM YMFZ FS DPYVEKFSK EVMR DS YREHNFODSX DSQRHKVEH KV GVDS VNE HLARPR FSO YVMDKDLDFSH KV HNYYVEK DK, DK DH DPYVEKFSK KAFK AR DH FMHV FIMR KV RSGVZ KAR UENDKH VU ADH ERFODSX YREUVEPFSLRH. AR DSQRHKH PNLA VU ADPHRMU DS KAVHR ERFODSXH FSO DH DSLMDSRO KV VQREKDER ADPHRMU. D KENHK KAFK ZVN FSO ZVNE UEDRSOH TDMM VUURE ADP KAR HNYYVEK KAFK D TVNMO VUURE DU D LVNMO IR KARER TDKA ADP. TDKAVNK KAFK HNYYVEK D URFE KAFK AR TDMM AFQR SV RSREXZ MRUK KV YEVPVKR VNE YEVGRLK. ZVNE UEDRSO, LAFEMRH IFIIFXR
+WINOK BVYBN NOBLI SWECD KNWSD DYCYW OMYXP ECSYX KPDOB BOKNS XQIYE BVODD OBKCS MKXXY DMVOK BVICO ORYGS WSQRD LOYPK XIKCC SCDKX MODYI YEZOB RKZCD RKDCR YGCKG KXDYP SWKQS XKDSY XYXWI ZKBDL EDSDB EVIPK SVDYC OORYG KXIDR SXQSM YEVNN YGYEV NRKFO DROVO KCDSX PVEOX MOEZY XDROQ BOKDK PPKSB CXYGC DSBBS XQKMB YCCDR OYMOK XIYEK BOAES DOBSQ RDDRK DGOCR KBOKN OOZNS CVSUO YPDRK DNBOK NPEVS XCDSD EDSYX CVKFO BIKXN SBOTY SMONK CIYEN SNKDD ROFSM DYBSO CYPWB VSXMY VXKXN DROXO GRYZO DROIL BSXQD YCYWK XIVYX QCEPP OBSXQ ZOYZV OIODS MKXXY DLOVS OFODR KDKXI DRSXQ SWSQR DGBSD OYBCK IMYEV NWYFO DROMY XQBOC CYBDR OZBOC SNOXD DYGKB NCKTE CDMYE BCOSP IYEBY GXOPP YBDCR KFOXY DKVBO KNIZO BCEKN ONDRO WXYXO DROVO CCWBL KLLKQ OSCWY CDSXC SCDOX DDRKD SCRYE VNROK BIYEB CMROW OKXNS GSVVL OSXVY XNYXX OHDGO OUPYB KWOOD SXQYP DROQR YCDMV ELSPI YEKBO GSVVS XQGOW SQRDW OODDR OBOYB SPIYE ZBOPO BKAES ODOBC ODDSX QKDDR OKDRO XOEWS BOWKS XWINO KBVYB NNOBL IFOBI DBEVI IYEBC MRKBV OCNSM UOXC
+
 """
 
 ReverseString = False # me when ciphertext was reversed :(
 decipherData = {
     "Ready" : True,
     "AutoSolve" : True,
-    "recommendShift" : "chi"
+    "recommendShift" : "chi",
+    "clean_plaintext" : True
 }
 decryptionReady = True
 
@@ -66,18 +69,22 @@ def recommendedShiftFrequencyAnalysis(string: str, info = False) -> int:
     return distance
 
 if decryptionReady:
-    for i,block in enumerate([string]):
-        args = {
-            "string" : block,
-            "info" : True
-        }
-        if not decipherData["AutoSolve"]:
-            RecommendedShift = recommendedShift(args, decipherData["recommendShift"])
-            shiftNum = [int(i) for i in (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")).split(",")] or [1,0]
-        else:
-            shiftNum = recommendedShift(args, decipherData["recommendShift"])
-        if shiftNum:
-            string = Affineshift(block,shiftNum).lower()
+    args = {
+        "string" : string,
+        "info" : True
+    }
+    if not decipherData["AutoSolve"]:
+        RecommendedShift = recommendedShift(args, decipherData["recommendShift"])
+        shiftNum = [int(i) for i in (input(f"Shift value for block 1 (Recommended shift: {RecommendedShift} via frequency analysis): ")).split(",")] or [1,0]
+    else:
+        shiftNum = recommendedShift(args, decipherData["recommendShift"])
+        print(shiftNum)
+
+    if shiftNum:
+        string = Affineshift(string,shiftNum).lower()
+    
+    if decipherData["clean_plaintext"]:    string = " ".join(cipherTools.clean_plaintext(string))
+    
     if string.islower():
         print(BLUE + string + RESET)
     else:

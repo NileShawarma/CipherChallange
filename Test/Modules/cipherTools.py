@@ -2,6 +2,8 @@ from collections import Counter
 import numpy
 import os 
 import math
+import wordsegment
+import random
 
 RED = "\033[91m"
 BLUE = "\033[1;36m"
@@ -9,23 +11,28 @@ MAGENTA = "\033[1;35m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
 
+wordsegment.load()
+
+raw_freq_data = {}
+
+for ngram in ["monograms","bigrams","trigrams","quadgrams"]:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","ngrams",f"{ngram}.txt"), "r") as file:
+        raw_freq_data[ngram] = {"TOTAL_VALUE":0}
+        for line in file:
+            data = line.split(" ")
+            raw_freq_data[ngram][data[0]] = int(data[1])
+            raw_freq_data[ngram]["TOTAL_VALUE"] += int(data[1])
+
 class bigram():
     def __init__(self):
-        self.bigramPath =  os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","bigrams.txt")
-        self.bigrams = {}
-        self.totalVal = 0
-
-        with open(self.bigramPath, "r") as file:
-            for line in file:
-                bigramData = line.split(" ")
-                self.bigrams[bigramData[0]] = int(bigramData[1])
-                self.totalVal += int(bigramData[1])
+        self.bigrams = raw_freq_data["bigrams"].copy()
             
         for key in list(self.bigrams.keys()):
-            probability = self.bigrams[key]/self.totalVal
-            self.bigrams[key] = math.log10(probability)
+            probability = self.bigrams[key]/self.bigrams["TOTAL_VALUE"]
+            if key != "TOTAL_VALUE":
+                self.bigrams[key] = math.log10(probability)
 
-        self.baseScore = math.log10(0.01/self.totalVal)
+        self.baseScore = math.log10(0.01/self.bigrams["TOTAL_VALUE"])
         print(f"{GREEN}Loaded {len(self.bigrams)} bigrams.{RESET}")    
     def score(self, text):
         
@@ -42,21 +49,14 @@ class bigram():
         return finalScore
 class trigram():
     def __init__(self):
-        self.trigramPath =  os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","trigrams.txt")
-        self.trigrams = {}
-        self.totalVal = 0
+        self.trigrams = raw_freq_data["trigrams"].copy()
 
-        with open(self.trigramPath, "r") as file:
-            for line in file:
-                trigramData = line.split(" ")
-                self.trigrams[trigramData[0]] = int(trigramData[1])
-                self.totalVal += int(trigramData[1])
-            
         for key in list(self.trigrams.keys()):
-            probability = self.trigrams[key]/self.totalVal
-            self.trigrams[key] = math.log10(probability)
+            probability = self.trigrams[key]/self.trigrams["TOTAL_VALUE"]
+            if key != "TOTAL_VALUE":
+                self.trigrams[key] = math.log10(probability)
 
-        self.baseScore = math.log10(0.01/self.totalVal)
+        self.baseScore = math.log10(0.01/self.trigrams["TOTAL_VALUE"])
         print(f"{GREEN}Loaded {len(self.trigrams)} trigrams.{RESET}")    
     def score(self, text):
         
@@ -73,21 +73,13 @@ class trigram():
         return finalScore
 class quadgram():
     def __init__(self):
-        self.quadgramPath =  os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","quadgrams.txt")
-        self.quadgrams = {}
-        self.totalVal = 0
-
-        with open(self.quadgramPath, "r") as file:
-            for line in file:
-                quadgramData = line.split(" ")
-                self.quadgrams[quadgramData[0]] = int(quadgramData[1])
-                self.totalVal += int(quadgramData[1])
+        self.quadgrams = raw_freq_data["quadgrams"].copy()
             
         for key in list(self.quadgrams.keys()):
-            probability = self.quadgrams[key]/self.totalVal
-            self.quadgrams[key] = math.log10(probability)
-
-        self.baseScore = math.log10(0.01/self.totalVal)
+            probability = self.quadgrams[key]/self.quadgrams["TOTAL_VALUE"]
+            if key != "TOTAL_VALUE":
+                self.quadgrams[key] = math.log10(probability)
+        self.baseScore = math.log10(0.01/self.quadgrams["TOTAL_VALUE"])
         print(f"{GREEN}Loaded {len(self.quadgrams)} quadgrams.{RESET}")    
     def score(self, text):
         
@@ -107,7 +99,7 @@ class ngrams():
         self.trigrams = trigram()
         self.bigrams = bigram()
         self.quadgrams = quadgram()
-        print(f"{MAGENTA}Total Freqs: Bi - {math.log10(self.bigrams.totalVal)}\n     Tri - {math.log10(self.trigrams.totalVal)}\n     Quad - {math.log10(self.quadgrams.totalVal)} {RESET}")
+        print(f"{MAGENTA}Total Freqs:\n     Bi   - {self.bigrams.bigrams["TOTAL_VALUE"]}\n     Tri  - {self.trigrams.trigrams["TOTAL_VALUE"]}\n     Quad - {self.quadgrams.quadgrams["TOTAL_VALUE"]} {RESET}")
     def score(self, text):
         finalScore = 0
 
@@ -152,42 +144,40 @@ def Affineshift(text: str,key: list) -> str:
             result += chr( ( ( (ord(char)-97) *multi) +shift) % 26 + 97)
 
     return result
-def chiSquared(text: str) -> int: #im pretty sure this is a version of standard deviation :sob, adds up the square of each letters occurance subtracted from its expected occurance and divides by expected occurance
-    english_letter_frequencies = {
-        'E': 0.1270,
-        'T': 0.0906,
-        'A': 0.0817,
-        'O': 0.0751,
-        'I': 0.0697,
-        'N': 0.0675,
-        'S': 0.0633,
-        'H': 0.0609,
-        'R': 0.0599,
-        'D': 0.0425,
-        'L': 0.0403,
-        'C': 0.0278,
-        'U': 0.0276,
-        'M': 0.0241,
-        'W': 0.0236,
-        'F': 0.0223,
-        'G': 0.0202,
-        'Y': 0.0197,
-        'P': 0.0193,
-        'B': 0.0149,
-        'V': 0.0098,
-        'K': 0.0077,
-        'J': 0.0015,
-        'X': 0.0015,
-        'Q': 0.0010, # Note: Often rounded from 0.00095
-        'Z': 0.0007
-    }
-    freqs = Counter(text.replace(" ",""))
-    length = len(text)
+def chiSquared(text: str, mode : str = "mono") -> int: #Mode can be 'mono','bi','tri','quad'
+    #im pretty sure this is a version of standard deviation :sob, 
+    #adds up the square of each letters occurance subtracted from its expected occurance and divides by expected occurance
+    # sigma ((counted_freq - expected_freq)^2/expected_freq) for all patterns seen
+    
+    pattern_length = 1
+
+    match mode:
+        case "mono":
+            data_set_frequencies = raw_freq_data["monograms"]
+        case "bi":
+            pattern_length = 2
+            data_set_frequencies = raw_freq_data["bigrams"]
+        case "tri":
+            pattern_length = 3
+            data_set_frequencies = raw_freq_data["trigrams"]        
+        case "quad":
+            pattern_length = 4
+            data_set_frequencies = raw_freq_data["quadgrams"]
+        case _:
+            data_set_frequencies = raw_freq_data["monograms"]
+        
+    text = text.replace(" ","").upper()
+    partitioned_text = [text[i:i+pattern_length] for i in range(len(text)-pattern_length+1)]
+
+    freqs = Counter(partitioned_text)
+    length = len(partitioned_text)
 
     total = 0
-    for letter, freq in freqs.items():
+    for pattern, freq in freqs.items():
         try:
-            total +=((freq-(english_letter_frequencies[letter.upper()]*length))**2)/english_letter_frequencies[letter.upper()]
+            estimated_prob = data_set_frequencies[pattern.upper()]/data_set_frequencies["TOTAL_VALUE"]
+
+            total +=((freq - (estimated_prob*length) )**2) / (estimated_prob*length)
         except:
             pass
     return total
@@ -211,9 +201,18 @@ def recommendedShiftChiSquared(string: str, info = False) -> int:
         print(allChis[2])
 
     return minChi[1]
-def ic(self):
-    freqs = Counter(self)
-    length = len(self)
+def ic(text, mode : int = 1):
+    pattern_length = 1
+
+    if mode>1:
+        pattern_length = mode
+        
+    text = text.replace(" ","").upper()
+    partitioned_text = [text[i*pattern_length:i*pattern_length+pattern_length] for i in range(len(text)//pattern_length)]
+
+    freqs = Counter(partitioned_text)
+    length = len(partitioned_text)
+
 
     ioc = sum([value*(value-1) for value in freqs.values()])/(length*(length-1))
     return ioc
@@ -223,6 +222,16 @@ def inverseText(string: str) -> str:
         keyCode = 90-(ord(char)-65)
         result += chr(keyCode)
     return result
+
+def random_insert_from_corpus(corpus,text_length : int = 500) -> str:
+    contents = corpus
+    
+    return contents[random.randint(0,len(contents)-text_length):]
+    
+
+def clean_plaintext(plaintext: str) -> str:
+    return wordsegment.segment(plaintext)
+
 def matrixMultiplier(MatA : list, MatB : list) -> list:
     """Eg
     1 4 7     1
@@ -278,17 +287,14 @@ def inverseMatrixMod26(MatA: list):
     return numpy.linalg.inv(numpy.array(MatA))
 
 if __name__ == "__main__":
-    MatA = [
-        [1,2,3],
-        [4,5,6],
-        [7,8,9]
-    ]
+    text = """
+NBDWXJBOMELDZVPGWMMELBJQRPMPTDDWRRGQIDRKJFOWWTZOLVKCOYIJQ
+RMCQJZYJNVBECTBJJKJFOWWWWHFFTSNXYFBVVVTTYIETCBLKMIOXYJGVV
+VSWGSELMMYEIMMGFUGMMXMBVRPBITXYNAOIOYEVWVSKDTYJZZHNNBCEMN
+OZRVWMXMGMMMAYNKCYJJAWPFHSNXYFBVVVYPZWRRMGIELBCEJNBNOVDEC
+MTMQIXYNAXEJJQNJZAMDRFWLZVKTNDRUYPZMEIMSSWHWDRTNLZRTJNJVG
+JVOEXWIHWKMMOIOYVZIUXBJFVQWIKVWBCEEKWMWDFTGIIGTJGBX
+    """.replace("\n","").replace(" ","")
 
-    MatB = [
-        [1,2,2],
-        [3,4,12],
-        [5,6,30]
-    ]
-    resultMat = numpy.array(matrixMultiplier(MatA,MatB))
-    print(resultMat)
-    print(matrixMultiplier(MatA,MatB))
+    for i in range(1,6):
+        print(f"IC{i}: {ic(text,i)}")
