@@ -10,13 +10,15 @@ import cipherTools
 
 #Editable toggles and shit
 string = """
-WINOK BVYBN NOBLI SWECD KNWSD DYCYW OMYXP ECSYX KPDOB BOKNS XQIYE BVODD OBKCS MKXXY DMVOK BVICO ORYGS WSQRD LOYPK XIKCC SCDKX MODYI YEZOB RKZCD RKDCR YGCKG KXDYP SWKQS XKDSY XYXWI ZKBDL EDSDB EVIPK SVDYC OORYG KXIDR SXQSM YEVNN YGYEV NRKFO DROVO KCDSX PVEOX MOEZY XDROQ BOKDK PPKSB CXYGC DSBBS XQKMB YCCDR OYMOK XIYEK BOAES DOBSQ RDDRK DGOCR KBOKN OOZNS CVSUO YPDRK DNBOK NPEVS XCDSD EDSYX CVKFO BIKXN SBOTY SMONK CIYEN SNKDD ROFSM DYBSO CYPWB VSXMY VXKXN DROXO GRYZO DROIL BSXQD YCYWK XIVYX QCEPP OBSXQ ZOYZV OIODS MKXXY DLOVS OFODR KDKXI DRSXQ SWSQR DGBSD OYBCK IMYEV NWYFO DROMY XQBOC CYBDR OZBOC SNOXD DYGKB NCKTE CDMYE BCOSP IYEBY GXOPP YBDCR KFOXY DKVBO KNIZO BCEKN ONDRO WXYXO DROVO CCWBL KLLKQ OSCWY CDSXC SCDOX DDRKD SCRYE VNROK BIYEB CMROW OKXNS GSVVL OSXVY XNYXX OHDGO OUPYB KWOOD SXQYP DROQR YCDMV ELSPI YEKBO GSVVS XQGOW SQRDW OODDR OBOYB SPIYE ZBOPO BKAES ODOBC ODDSX QKDDR OKDRO XOEWS BOWKS XWINO KBVYB NNOBL IFOBI DBEVI IYEBC MRKBV OCNSM UOXC
+KLYJKPMCLDUFXAESCZFRSSZZADLEESPKZZ
 """
 ReverseString = False # me when ciphertext was reversed :(
 decipherData = {
     "Ready" : True,
-    "AutoSolve" : True,
-    "recommendShift" : "chi"
+    "AutoSolve" : False,
+    "recommendShift" : "chi",
+    "mode": "overkill", #can be neek, overkill, or regular
+    "crib": "peter" #only for neek mode
 }
 decryptionReady = True
 
@@ -50,103 +52,47 @@ def shift(text: str,s: int) -> str:
 def recommendedShift(args: dict, mode = "chi")-> int:
     match mode:
         case "frequency":
-            return recommendedShiftFrequencyAnalysis(args["string"],args["info"])
+            return cipherTools.recommendedShiftFrequencyAnalysis(args["string"],args["info"])
         case "chi":
-            return recommendedShiftChiSquared(args["string"],args["info"])
-def recommendedShiftChiSquared(string: str, info = False) -> int:
-    minChi = [10**10,0]
-    allChis = []
-    for i in range(26):
-        chi = chiSquared(shift(string,i))
-
-        if chi<minChi[0]:
-            minChi = [chi,i]
-        allChis.append([chi,i])
-    
-    if info:
-        allChis=sorted(allChis, key=lambda thingy: thingy[0])
-        print(allChis[0])
-        print(allChis[1])
-        print(allChis[2])
-    return minChi[1]
-def recommendedShiftFrequencyAnalysis(string: str, info = False) -> int:
-    frequencies = Counter(string.lower())
-    frequenciesVer2 = sorted(list(frequencies.items()), key= lambda thingy: thingy[1], reverse= True)
-
-    maxDetails = ["",0]
-    potentialKeys = []
-    for letter, freq in frequencies.items():
-        if freq>maxDetails[1]:
-            maxDetails = [letter.upper(),freq]
-            potentialKeys.append([letter.upper(),freq])
-    
-    distance = ord("E") - ord(maxDetails[0])
-    if distance < 0: distance = 26+distance
-
-    if info:
-        print(frequenciesVer2[0])
-        print(frequenciesVer2[1])
-        print(frequenciesVer2[2])
-        print(frequenciesVer2[3])
-
-    return distance
-def chiSquared(text: str) -> int: #im pretty sure this is a version of standard deviation :sob, adds up the square of each letters occurance subtracted from its expected occurance and divides by expected occurance
-    english_letter_frequencies = {
-        'E': 0.1270,
-        'T': 0.0906,
-        'A': 0.0817,
-        'O': 0.0751,
-        'I': 0.0697,
-        'N': 0.0675,
-        'S': 0.0633,
-        'H': 0.0609,
-        'R': 0.0599,
-        'D': 0.0425,
-        'L': 0.0403,
-        'C': 0.0278,
-        'U': 0.0276,
-        'M': 0.0241,
-        'W': 0.0236,
-        'F': 0.0223,
-        'G': 0.0202,
-        'Y': 0.0197,
-        'P': 0.0193,
-        'B': 0.0149,
-        'V': 0.0098,
-        'K': 0.0077,
-        'J': 0.0015,
-        'X': 0.0015,
-        'Q': 0.0010, # Note: Often rounded from 0.00095
-        'Z': 0.0007
-    }
-    freqs = Counter(text)
-    length = len(text)
-
-    total = 0
-    for letter, freq in freqs.items():
-        total +=((freq-(english_letter_frequencies[letter.upper()]*length))**2)/english_letter_frequencies[letter.upper()]
-    return total
-def ic(self):
-    freqs = Counter(self)
-    length = len(self)
-
-    ioc = sum([value*(value-1) for value in freqs.values()])/(length*(length-1))
-    return ioc
-
+            return cipherTools.recommendedShiftChiSquared(args["string"],args["info"])
 
 if decryptionReady:
-    for i,block in enumerate([string]):
+
+    if decipherData["mode"] == "overkill": # we pull up with the frequency of over 12 billion word patterns to a caesar cipher 🔥 and yes i googled the emoji and what
+        ngraminator = cipherTools.ngrams()
+        best_key = 0
+        best_string = ""
+        best_score = float("-inf")
+        for i in range(25):
+            attempt = shift(string,i)
+            score = ngraminator.score(attempt)
+
+            if score > best_score:
+                best_score = score
+                best_key = i
+                best_string = attempt
+        string = best_string
+    elif decipherData["mode"] == "neek": #TODO WRITE THE WHOLE NEEK MODE
+        length = len(decipherData["cribs"])
+        result = chr((ord(char) + s-65) % 26 + 65)
+        pass
+    else:
         args = {
-            "string" : block,
+            "string" : string,
             "info" : True
         }
+
         if not decipherData["AutoSolve"]:
             RecommendedShift = recommendedShift(args, decipherData["recommendShift"])
-            shiftNum = (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")) or 0
+            shiftNum = (input(f"Shift value for block 1 (Recommended shift: {RecommendedShift} via frequency analysis): ")) or 0
+        
         else:
             shiftNum = recommendedShift(args, decipherData["recommendShift"])
+        
+        
         if shiftNum:
-            string = shift(block,int(shiftNum)).lower()
+            string = shift(string,int(shiftNum)).lower()
+    string = " ".join(cipherTools.clean_plaintext(string))
     if string.islower():
         print(BLUE + string + RESET)
     else:

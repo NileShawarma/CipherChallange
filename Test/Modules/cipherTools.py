@@ -1,9 +1,11 @@
 from collections import Counter
+from matplotlib import pylab
 import numpy
 import os 
 import math
 import wordsegment
 import random
+import string
 
 RED = "\033[91m"
 BLUE = "\033[1;36m"
@@ -14,14 +16,18 @@ RESET = "\033[0m"
 wordsegment.load()
 
 raw_freq_data = {}
-
+percentage_freq_data = {}
 for ngram in ["monograms","bigrams","trigrams","quadgrams"]:
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","ngrams",f"{ngram}.txt"), "r") as file:
         raw_freq_data[ngram] = {"TOTAL_VALUE":0}
+        percentage_freq_data[ngram] = {}
         for line in file:
             data = line.split(" ")
             raw_freq_data[ngram][data[0]] = int(data[1])
             raw_freq_data[ngram]["TOTAL_VALUE"] += int(data[1])
+            percentage_freq_data[ngram][data[0]] = int(data[1])
+        for key,item in percentage_freq_data[ngram].items():
+            percentage_freq_data[ngram][key] = item/raw_freq_data[ngram]["TOTAL_VALUE"]
 
 class bigram():
     def __init__(self):
@@ -110,6 +116,37 @@ class ngrams():
         finalScore = 0.1 * biScore + 0.3 * triScore + 0.6 * quadScore
         
         return finalScore
+
+class what_the_fuck_was_madness_thinking():
+    def __init__(self):
+        #i swear to god he was on drugs when thinking this vector stuff was the best way to show beginners how english-esque text is
+        pass
+    def dp(self, Vect1,Vect2 = percentage_freq_data["monograms"]):
+
+        if len(Vect1) < len(Vect2):
+            Vect2,Vect1 = Vect1,Vect2
+        counter = 0
+        for key in Vect1.keys():
+            try:
+                counter += Vect1[key.upper()] * Vect2[key.upper()]
+            except:
+                pass
+        
+        return counter
+    
+    def cosine(self,Vect1,Vect2 = percentage_freq_data["monograms"]):
+        #Takes two "vectors" (acc dictionaries in the form {letter:percent_freq}) and finds the angle between them
+        #keys from each array are assumed to be in the same case and format
+        #WE COULDD use numpy for the dot product bit but thats no fun
+
+        dp_1_2 = self.dp(Vect1,Vect2)
+        dp_1_1 = self.dp(Vect1,Vect1)
+        dp_2_2 = self.dp(Vect2,Vect2)
+
+        angle_cosine = dp_1_2 / math.sqrt(dp_1_1*dp_2_2)
+        angle = math.acos(angle_cosine)
+        
+        return {"Angle" : angle, "Cosine" : angle_cosine}
 
 def frequencyAnalysis(string: str) -> dict:
     freqs = Counter(string)
@@ -216,6 +253,7 @@ def ic(text, mode : int = 1):
 
     ioc = sum([value*(value-1) for value in freqs.values()])/(length*(length-1))
     return ioc
+
 def inverseText(string: str) -> str:
     result = ""
     for char in string:
@@ -225,9 +263,16 @@ def inverseText(string: str) -> str:
 
 def random_insert_from_corpus(corpus,text_length : int = 500) -> str:
     contents = corpus
-    
-    return contents[random.randint(0,len(contents)-text_length):]
-    
+    pos = random.randint(0,len(contents))
+
+    return contents[pos-text_length:pos]
+def random_string(length):
+    alphabet = string.ascii_uppercase
+
+    result = ""
+    for _ in range(length):
+        result += random.choice(alphabet)
+    return result
 
 def clean_plaintext(plaintext: str) -> str:
     return wordsegment.segment(plaintext)
@@ -287,14 +332,24 @@ def inverseMatrixMod26(MatA: list):
     return numpy.linalg.inv(numpy.array(MatA))
 
 if __name__ == "__main__":
-    text = """
-NBDWXJBOMELDZVPGWMMELBJQRPMPTDDWRRGQIDRKJFOWWTZOLVKCOYIJQ
-RMCQJZYJNVBECTBJJKJFOWWWWHFFTSNXYFBVVVTTYIETCBLKMIOXYJGVV
-VSWGSELMMYEIMMGFUGMMXMBVRPBITXYNAOIOYEVWVSKDTYJZZHNNBCEMN
-OZRVWMXMGMMMAYNKCYJJAWPFHSNXYFBVVVYPZWRRMGIELBCEJNBNOVDEC
-MTMQIXYNAXEJJQNJZAMDRFWLZVKTNDRUYPZMEIMSSWHWDRTNLZRTJNJVG
-JVOEXWIHWKMMOIOYVZIUXBJFVQWIKVWBCEEKWMWDFTGIIGTJGBX
-    """.replace("\n","").replace(" ","")
+    corpus = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","Data","corpus","no_newlines.txt"),"r").read()
 
-    for i in range(1,6):
-        print(f"IC{i}: {ic(text,i)}")
+    obj = what_the_fuck_was_madness_thinking()
+    x,y = [], []
+    for i in range(100,1000,100):
+        x.append(i)
+        freqs = Counter(random_insert_from_corpus(corpus,i))
+        total = sum([ int(item) for key,item in freqs.items()])
+        new = {}
+        
+        for key,item in freqs.items():
+            new[key.upper()] = item/total
+        print(obj.cosine(new))
+
+        freqs = Counter(random_string(i))
+        total = sum([ int(item) for key,item in freqs.items()])
+        new = {}
+        
+        for key,item in freqs.items():
+            new[key.upper()] = item/total
+        print(obj.cosine(new), end="-Random string\n")
