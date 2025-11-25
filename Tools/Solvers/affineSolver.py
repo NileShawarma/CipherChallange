@@ -7,22 +7,159 @@ modulesPath = os.path.join(script_dir,"..","..","Test","Modules")
 sys.path.append(modulesPath)
 
 import cipherTools
-from cipherTools import Affineshift,recommendedShiftChiSquared # type: ignore
 
 #Editable toggles and shit
-string = """
-WINOK BVYBN NOBLI SWECD KNWSD DYCYW OMYXP ECSYX KPDOB BOKNS XQIYE BVODD OBKCS MKXXY DMVOK BVICO ORYGS WSQRD LOYPK XIKCC SCDKX MODYI YEZOB RKZCD RKDCR YGCKG KXDYP SWKQS XKDSY XYXWI ZKBDL EDSDB EVIPK SVDYC OORYG KXIDR SXQSM YEVNN YGYEV NRKFO DROVO KCDSX PVEOX MOEZY XDROQ BOKDK PPKSB CXYGC DSBBS XQKMB YCCDR OYMOK XIYEK BOAES DOBSQ RDDRK DGOCR KBOKN OOZNS CVSUO YPDRK DNBOK NPEVS XCDSD EDSYX CVKFO BIKXN SBOTY SMONK CIYEN SNKDD ROFSM DYBSO CYPWB VSXMY VXKXN DROXO GRYZO DROIL BSXQD YCYWK XIVYX QCEPP OBSXQ ZOYZV OIODS MKXXY DLOVS OFODR KDKXI DRSXQ SWSQR DGBSD OYBCK IMYEV NWYFO DROMY XQBOC CYBDR OZBOC SNOXD DYGKB NCKTE CDMYE BCOSP IYEBY GXOPP YBDCR KFOXY DKVBO KNIZO BCEKN ONDRO WXYXO DROVO CCWBL KLLKQ OSCWY CDSXC SCDOX DDRKD SCRYE VNROK BIYEB CMROW OKXNS GSVVL OSXVY XNYXX OHDGO OUPYB KWOOD SXQYP DROQR YCDMV ELSPI YEKBO GSVVS XQGOW SQRDW OODDR OBOYB SPIYE ZBOPO BKAES ODOBC ODDSX QKDDR OKDRO XOEWS BOWKS XWINO KBVYB NNOBL IFOBI DBEVI IYEBC MRKBV OCNSM UOXC
+cosine_calc = cipherTools.what_the_fuck_was_madness_thinking()
 
+class AffineCipher():
+    def __setattr__(self, name, value):
+        if name == "multiplier":
+            if value in self.possibleMultis:
+                super().__setattr__(name,value)
+                return
+            raise Exception("Multiplier is not invertible!")
+        
+        super().__setattr__(name,value)
+    def __init__(self, shift = None, multiplier = 1, additive = 0,rawString = None):
+        self.possibleMultis = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+
+        if shift != None:
+            self.multiplier = shift[0]
+            self.additive = shift[1]
+        else:
+            self.multiplier = multiplier
+            self.additive = additive
+        
+        self.raw_string = rawString
+        result = ""
+
+        if not self.multiplier in self.possibleMultis:
+            raise Exception("Multiplier is not invertible!")
+    def decrypt(self, text = None):
+        if text!=None:
+            pass
+        else:
+            text = self.raw_string
+
+        multi = self.multiplier
+        shift = self.additive
+        result = ""
+        for i in range(len(text)):
+            
+            char = text[i]
+
+            if not char.isalpha():
+                result += char
+                continue
+            # Encrypt uppercase characters
+            if (char.isupper()):
+                result += chr(   (  ( (ord(char)-65)-shift)*cipherTools.baseN_Inverse(multi)  )%26+65   )
+            # Encrypt lowercase characters
+            else:
+                result += chr(   (  ( (ord(char)-97)-shift)*cipherTools.baseN_Inverse(multi)  )%26+97   )
+
+        return result
+    def encrypt(self, text = None):
+        if text==None:
+            text = self.raw_string
+
+        multi = self.multiplier
+        shift = self.additive
+        result = ""
+        for i in range(len(text)):
+            
+            char = text[i]
+
+            if not char.isalpha():
+                result += char
+                continue
+            # Encrypt uppercase characters
+            if (char.isupper()):
+                result += chr(   (  ( (ord(char)-65)*multi)+shift  )%26+65   )
+            # Encrypt lowercase characters
+            else:
+                result += chr(   (  ( (ord(char)-97)*multi)+shift  )%26+97   )
+
+        return result        
+    def auto_solve(self, text = None):
+        if text == None:
+            text = self.raw_string
+        
+        best_cosine,best_key = -1,[1,0]
+        for multi in self.possibleMultis:
+            for shift in range(26):
+                self.multiplier,self.additive = multi, shift
+
+                decrypt = self.decrypt(text)
+                decrypt = "".join([char if char.isalpha() else "" for char in decrypt])
+
+                VectDecrypt = Counter(decrypt)
+
+                total = sum([ int(item) for key,item in VectDecrypt.items()])
+                
+                for key,item in VectDecrypt.items():
+                    VectDecrypt[key.upper()] = item/total
+
+                score = cosine_calc.cosine(VectDecrypt)["Cosine"]
+
+                if score > best_cosine:
+                    best_cosine = score
+                    best_key = [multi,shift]
+        
+        return {"decrypt" : self.decrypt(text), "key" : best_key}
+    def auto_solve_crib(self, crib, text=None):
+        if text is None:
+            text = self.raw_string
+        
+        if type(crib) != list:
+            raise Exception("Crib must be a list of [plain, cipher].")
+
+        plain_crib = crib[0].upper()
+        enciphered_crib = crib[1].upper()
+
+        equations = [
+            [ord(plain_crib[i]) - 65, ord(enciphered_crib[i]) - 65]
+            for i in range(len(plain_crib))
+        ]
+
+        for i in range(len(equations)):
+            for j in range(i+1, len(equations)):
+                x1, y1 = equations[i]
+                x2, y2 = equations[j]
+
+                an = (x1 - x2) % 26
+                c  = (y1 - y2) % 26
+
+                # test if invertible
+                if an in self.possibleMultis:
+                    inv = cipherTools.baseN_Inverse(an)
+                    a = (c * inv) % 26
+                    b = (y1 - a * x1) % 26
+
+                    # decrypt with found key
+                    oldA, oldB = self.multiplier, self.additive
+                    self.multiplier, self.additive = a, b
+                    decrypt_full = self.decrypt(text)
+
+                    if self.encrypt(plain_crib) == enciphered_crib:
+                        return {"key": [a, b], "decrypt": decrypt_full}
+
+                    self.multiplier, self.additive = oldA, oldB
+        raise Exception("Unsolvable via cribs!")
+
+string = """
+TSLCZFRCEFRPECCETNUMDTQCLKCVFRMWTQGFMGLNFBLBDCELBDCTHDMQFQN
+LQNLCEDCQFFQLRQWLYNCDQWNTQNCLDWELYLTNDIFXLVEZWTWCELHETHXLQH
+YFNNCELBFLSTRNNCYTUCFPLCCFCELNDBLNTWL
 """
 
 ReverseString = False # me when ciphertext was reversed :(
 decipherData = {
-    "Ready" : True,
+    "Ready" : False,
     "AutoSolve" : True,
-    "recommendShift" : "chi",
     "clean_plaintext" : True
 }
-decryptionReady = True
+
 
 result = ""
 
@@ -39,53 +176,54 @@ BLUE = "\033[94m"
 RESET = "\033[0m"
 
 print(f"String length: {len(string)}")
+if __name__ == "__main__":
+    if decipherData["Ready"]:
+        args = {
+            "string" : string,
+            "info" : True
+        }
+        
+        affine = AffineCipher()
+        affine.raw_string = args["string"]
 
-def recommendedShift(args: dict, mode = "chi")-> list:
-    match mode:
-        case "frequency":
-            return recommendedShiftFrequencyAnalysis(args["string"],args["info"])
-        case "chi":
-            return recommendedShiftChiSquared(args["string"],args["info"])
-def recommendedShiftFrequencyAnalysis(string: str, info = False) -> int:
-    frequencies = Counter(string.lower())
-    frequenciesVer2 = sorted(list(frequencies.items()), key= lambda thingy: thingy[1], reverse= True)
+        if not decipherData["AutoSolve"]:
 
-    maxDetails = ["",0]
-    potentialKeys = []
-    for letter, freq in frequencies.items():
-        if freq>maxDetails[1]:
-            maxDetails = [letter.upper(),freq]
-            potentialKeys.append([letter.upper(),freq])
-    
-    distance = ord("E") - ord(maxDetails[0])
-    if distance < 0: distance = 26+distance
+            RecommendedKey = ",".join(affine.auto_solve()["key"])
 
-    if info:
-        print(frequenciesVer2[0])
-        print(frequenciesVer2[1])
-        print(frequenciesVer2[2])
-        print(frequenciesVer2[3])
+            shiftNum = [int(i) for i in (input(f"Shift value for text (Recommended shift: {RecommendedKey}): ")).split(",")] or [1,0]
 
-    return distance
+            affine.multiplier, affine.additive = shiftNum[0], shiftNum[1]
 
-if decryptionReady:
-    args = {
-        "string" : string,
-        "info" : True
-    }
-    if not decipherData["AutoSolve"]:
-        RecommendedShift = recommendedShift(args, decipherData["recommendShift"])
-        shiftNum = [int(i) for i in (input(f"Shift value for block 1 (Recommended shift: {RecommendedShift} via frequency analysis): ")).split(",")] or [1,0]
+        else:
+            affine.multiplier,affine.additive = affine.auto_solve()["key"]
+
+        
+        string = affine.decrypt().lower()
+
+        if decipherData["clean_plaintext"]:    
+            string = " ".join(cipherTools.clean_plaintext(string))
+        
+        print(f"KEY : {affine.multiplier},{affine.additive}")
+        if string.islower():
+            print(BLUE + string + RESET)
+        else:
+            print(RED + string + RESET)
     else:
-        shiftNum = recommendedShift(args, decipherData["recommendShift"])
-        print(shiftNum)
-
-    if shiftNum:
-        string = Affineshift(string,shiftNum).lower()
-    
-    if decipherData["clean_plaintext"]:    string = " ".join(cipherTools.clean_plaintext(string))
-    
-    if string.islower():
-        print(BLUE + string + RESET)
-    else:
-        print(RED + string + RESET)
+        print(f"{RED}Entering testing mode.\n\n{RESET}")
+        affine = AffineCipher()
+        affine.raw_string = """OYFSTGLYYRSBXPTCLLIRSBSLZANYSGYNXXPFYXTONWRTVYRAYLDJRYLQOWL
+BLSOCLSLTTFSQIYLVRTRNSNGFSLUICNTRELNYQSFSVLQRTINTFCOLVWSRVR
+FSRGRGFRCLQWLZNJCQZFHLJIZNJCQSOBNYRBWOAFVHONTCLLIFSQNGOLSIY
+NOLTOLQCNJQCP""".replace("\n","")
+        affine.multiplier = 17
+        affine.additive = 2
+        success = False
+        for i in range(len(affine.raw_string)-len("CRIB")+1):
+            try:
+                deets = (affine.auto_solve_crib(["CRIB",affine.raw_string[i:i+len("CRIB")]]))
+                print(deets)
+            except:
+                pass
+        if success:
+            print(deets)
+        print(affine.decrypt())

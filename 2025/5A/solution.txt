@@ -1,0 +1,5 @@
+Transposition cipher
+Type - Row
+Key - [3,5,2,1,4,0, 6,10,12,9,8,11,7,13]
+
+why was the key so long, i have no idea, harry and his elves hate us

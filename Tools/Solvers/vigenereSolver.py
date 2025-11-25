@@ -6,23 +6,24 @@ script_dir = os.path.dirname(__file__)
 modulesPath = os.path.join(script_dir,"..","..","Test","Modules")
 sys.path.append(modulesPath)
 
+import cipherTools
 from cipherTools import Affineshift,recommendedShiftChiSquared,ic,chiSquared,recommendedShiftFrequencyAnalysis # type: ignore
 
 #Editable toggles and shit
 string = """
-DEYRB UGZWR VEFMY PEOAR GTDHX MGWHR RRQRL GSZVE VVIES UZRTU OEHVR SSLLQ VBCYW YHVRL OEUGV TOTGX DVQWU SBLJN HELFQ ARJLL BIIGK JAEGM QGUTG NQAQC ENRYY VOAIK PNJGC YDRPW VFSOV QOTGK KIAWE TPNIC ZKRZI XUSAW NYEUK XEZWA NKIUE OMQHA TZWWR WTSGN IGZGC ZWYFZ HDNHM GZKRZ GINLO EOGJL RUNZD RTGKD RYABL ROMHE AVDAE CIFOY HKDVN FKTUK QFNZA IJEGW MRBSJ NHELF QANKV NRUNG NKOIL KVFHL FKDRT COEGI EKVFG NMJUX LULXJ SZLNZ MEXKP CDGRV IYGNM YOMHK KSHKL OSGTR DGNUU MNKVI NSVBZ YUIHA UQAAP OBHYA SVGFB LOBHZ UNEHE SHGNM ZEUKL VJTTB QSJOO EEKBU KNAEJ MAYNA EJMAY CEIHI VLOEE UZZGE BVKIW MZTJG VGKJT FFSAX BSRZP RATIE LXVSA EQGVQ ZUAUG EAWET EGTNE KRFIW RUYEP EDVGI OEIYF AVNNH QGROK VKIQG LSOEX VRONX XTPAW HRXAV TZHVV IYSAE EIPNV ZEIVE AQDAL CMNXK IEOYP CAHRO AUZGR XDXRF VWYOD RYONK KICWY GNSWA SASVX QVFIE ERQAG TDZKE CHLNG UPNBK AGDWF LVTUK NHRRC FOPRU AIBTQ NSTOK VYEWO OJZPR ECICO JRWSA OUCGA YDZVQ NFALV TOVZZ OKUCG GMIAJ KUGVT VUWRN LNOAB VLCEV ATYSP NJNIG OYIEL XVKBS CKKGZ NETXV NLVRF ICEOU SZWCJ ASLBB MEIUM VKMFF HTHXI YVXOK HGGAC EAKAF VKRYD TFLOE EKERC OLCIM ASSLL AVYUI KKKIF WJRRZ WSZNE ZAXUD LGVUV GNGTC HEIWZ TUKYH KYTZR RBXOO JCMQK GLNLX UEPDN YIAJS AIBEZ ZHSNI TRBKR ZGINO LSUUC YJREK WLRUV LYKKG UXDVD PJAAH GNMZZ NEIXW FAHNZ GNVGI AEEIC JLTGE ZHZNL VVWVX AHREN RKRBV WVNQL DNTLF NKHRV WHYNE FZMQG CAPZI ZANHG SIXKZ HVWLV WCEFL IYRUU KLXVK HCHTV VTMPC DRNFK IGNQA QOCRQ LRDW
+ZCZCO IBLSQ YFVMY IWPZP YSXDC JZOJX DYHZK AHIWQ FVYIW EIVCN VASBU OEZWJ IZXTA DYHZD VWPFO KIBYW PSFPS INGBX KAHEY ANBVX ELUKY NWOSF VIBYP FOKDU EPGGW KEJNM AKRRG WQSVF RREDW KGRVA WCLGV PHIBF GGLWR CKRRV HCGJC PVQNI CYHWX SGZXR WOKSE KEISG ZCSAK PMSOZ YSERW EQNRU YBUKY PELJV XGMKL GNSGL JMDRI ZIJRT FBGLA MFZQV RWRCI KAHSC FVWNM JWCLB FYNCG KQHEN YBKOR SBBIV BRGKK DVXFI NCBVQ BXEYH ZXTSQ PRVKY AEJZF XYCOJ CNYHV LPCXB RWOYB USSSP FSICT IPUWE NBJPF WJYCT KPHLX VXUWC LBVWG JCJSA KATSI IGLEL UPYHL WTSEO TSPGO KOQAE RVLCV XEQCW DUIDG UYOFX EKDFB GEJAS KRNXS CQFXP PQBSK RVWOR OXOBJ KSFTY YPWZC IKGMK LOJAH MYIZP KFTKQ GZLYI UMIYK IIPMZ UEFXD YHUSF THYBE SAKPM AVOGA ERVKR RTNCG ZNRRP QCFXN RZMBT OUIDY GRCFY NYBTO GLWRH YOTSR CFEWR RPQIG ZBVPQ VZCCP WLHYS AKOUW CVZSR CJVBL UQGQB VLMYY BEYGT NMAZC RXKFC CNZCE LJVCG SNQHF QRXDC FZPGL AWHYS AOPFS ZBVRP CFVCG WWPSS OGXAP GVBII ZCZJO JLAPS JYJMJ LWEQG LAGFW SEQYM ADSGQ ALHEY JMOGB RVYSQ PWEDR VAQHJ SGMOA FLMVE HRVRD LSQYB USPSJ TWEMR XDCAF PGLAT OCERS BRVZC CVKNS IDLEJ BMFEN VAZSJ DCPWA SUDBE YOIZB RXDCS MSQIJ ASWYE YOGII QRCKS HFLRK XMFIY JSNQH VKYEY MBTVH WETSU OZSJQ HIKGM KLCWD UIRYZ LOBJP FSGBB HQAHF BGSLP CMSQI WDICV RVZCG TBVTP GCEYS XDCDC YGMJM FUOEX DYHZM NRBGB RVYCL CFJEN HAKMW BVIJB GKYPS IKWKD BFWAY ZXTYO WCLBF EJVWF EFPUK CCSAE NM
 """.upper()
 ReverseString = False # me when ciphertext was reversed :(
-keyLength = 14
+keyLength = 7
 decipherData = {
     "Ready" : True,
     "AutoSolve" : True,
     "recommendShift" : "chi",
-    "AffineOrCaesar": "Affine" #when this is affine its basically quagmire II
+    "AffineOrCaesar": "Caesar" #when this is affine its basically quagmire II
 }
 decryptionReady = True
 AutoICData = {
-    "DoAutoIC" : True,
+    "DoAutoIC" : False,
     "StartKey" : 2,
     "MaxKey" : 33
 }
@@ -91,17 +92,17 @@ if decryptionReady:
             shiftNum = recommendedShift(args, decipherData["recommendShift"])
         if shiftNum or shiftNum==0 or len(shiftNum)>1:
             if typeShift=="Caesar":
-                seperatedText[i] = shift(block,int(shiftNum)).lower()
+                seperatedText[i] = shift(block,int(shiftNum[1])).lower()
             else:
                 seperatedText[i] = Affineshift(block,shiftNum).lower()   
-                continue #im not dealing with turning this into a readable key ibr             
-            decryptionKey+=str(shiftNum)+"|"
+            decryptionKey+=str(shiftNum[1])+"|"
         else:
             decryptionKey+="-"+"|"
 
 
 #Converts key into words and stuff if its caesar cus i hab no idea how to do it for affine
 if typeShift == "Caesar":
+    print("beep")
     result = ""
     for subkey in decryptionKey.split("|"):
         if subkey!="-" and subkey!="":
@@ -119,6 +120,7 @@ if typeShift == "Caesar":
     print(f"\n\n{RED}Decryption key: {result}\nCaesar Equiv: {decryptionKey}\nEncryption Key: {result2}{RESET}")
 
 newString = ""
+plaintext = ""
 if decipherData["Ready"]:
     for i in range(len(string)):
         if (i%keyLength)==0: 
@@ -129,4 +131,7 @@ if decipherData["Ready"]:
             newString += RED + character + RESET
         else:
             newString += BLUE + character + RESET
+            plaintext += character
     print(newString)
+    
+print(" ".join(cipherTools.clean_plaintext(plaintext)))
