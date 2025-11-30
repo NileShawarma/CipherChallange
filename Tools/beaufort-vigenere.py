@@ -5,7 +5,7 @@ import sys
 script_dir = os.path.dirname(__file__)
 modulesPath = os.path.join(script_dir,"..","Test","Modules")
 sys.path.append(modulesPath)
-
+import cipherTools
 from cipherTools import Affineshift,recommendedShiftChiSquared,inverseText,ic,chiSquared,recommendedShiftFrequencyAnalysis # type: ignore
 
 #FEATURES
@@ -74,6 +74,9 @@ def recommendedShift(args: dict, mode = "chi")-> list:
 string = inverseText(string)
 seperatedText = seperators(string,keyLength)
 print(string)
+
+IoC = cipherTools.IoC()
+
 if AutoICData["DoAutoIC"]:
     for i in range(AutoICData["StartKey"],AutoICData["MaxKey"]):
         seperatedText = seperators(string,i)
@@ -82,7 +85,7 @@ if AutoICData["DoAutoIC"]:
         seperatedText[1] = shift(seperatedText[1],0).lower()
         seperatedText.append("hi")
         chiSquared(seperatedText[0])
-        print(f"IC No1: {round(ic(seperatedText[0]),8)}, IC No2 : {round(ic(seperatedText[1]),8)}, IC No3 : {round(ic(seperatedText[2]),8)}")
+        print(f"IC No1: {round(IoC.ic(seperatedText[0]),8)}, IC No2 : {round(IoC.ic(seperatedText[1]),8)}, IC No3 : {round(IoC.ic(seperatedText[2]),8)}")
 decryptionKey = ""
 if decryptionReady:
     seperatedText = seperators(string,keyLength)

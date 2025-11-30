@@ -38,11 +38,7 @@ class GOD_cipher():
             self.alphabets[i] = self.alphabets[i].replace(" ","")
 
         self.raw_string = "hello this is a dummy message, what's your thoughts on pancakes"
-    def add_alphabet(self,alphabet):
-        self.alphabets.append(alphabet)
-    def clear(self):
-        self.alphabets = []
-    
+        self.IoC = cipherTools.IoC()
     def encrypt(self, key, text = None):
         if text == None:
             text = self.raw_string
@@ -121,38 +117,88 @@ class GOD_cipher():
         text = "".join([char if char.isalpha() else "" for char in text.upper()])
 
         if period == None:
-            period = sinkov(text,1,12)
-        
+            period = sinkov(text,1,12)["key"]
+        print(period)
         possible_alphas = []
-        for i in range(len(text)-len(crib)+1):
-            alphabets = ["-"*26 for i in range(period)]
+        for i in range(1):
+            i=181
+            alphabets = [["-" for j in range(26)] for i in range(period)]
 
             substr = text[i:i+len(crib)]
             seq_invalid = False
-
+            print("\n\n\n")
             for letter_pos in range(len(substr)):
                 substr_letter = substr[letter_pos].upper()
                 crib_letter = crib[letter_pos].upper()
-                current_alpha_pos = i%period
+                current_alpha_pos = (i+letter_pos)%period
                 current_alpha = alphabets[current_alpha_pos]
 
                 crib_letter_num = ord(crib_letter)-65
-
-                if current_alpha[crib_letter_num]!="-":
-                    seq_invalid = True
-                    break        
-                else:
-                    alphabets[current_alpha_pos] = substr_letter
-            if not seq_invalid:
-                possible_alphas.append(alphabets)
                 
-def seperators(string: str,keyLength: int) -> list:
+                if current_alpha[crib_letter_num]!="-" and current_alpha[crib_letter_num]!=substr_letter:
+                    print(f"The {crib_letter_num}th position is already occupied!")
+                    seq_invalid = True
+                    break       
+                elif substr_letter in current_alpha:
+                    if current_alpha.index(substr_letter) != crib_letter_num:
+                        print(f"The character {substr_letter} is in the alphabet twice!")
+                        seq_invalid = True
+                        break
+                    else:
+                        print(f"The {current_alpha_pos}th alphabet has already inserted {substr_letter} in the {crib_letter_num} position")
+                else:
+                    print(f"Inserting {substr_letter} in the {current_alpha_pos}th alphabet at position {crib_letter_num}")
+                    alphabets[current_alpha_pos][crib_letter_num] = substr_letter
+                #if i ==181: print(alphabets)
+            if not seq_invalid:
+                print("Internal consistency as been reached")
+                possible_alphas.append(alphabets)
+        print(possible_alphas)
+        correct_alphas = []
+        possible_alphas = possible_alphas[0] #im lazy
+        for possible_alpha_set in possible_alphas:
+
+            hitler_alpha_set = list(self.alphabets.values())
+            for i in range(len(hitler_alpha_set)):
+                hitler_alpha_set[i] = hitler_alpha_set[i].replace(" ","")
+            thingy = hitler_alpha_set
+
+            final_possible_sols = []
+            for possible_alpha in possible_alpha_set:
+                hitler_alpha_set = thingy.copy()
+                hitler_alpha_set2 = thingy.copy()
+                for pos, char in enumerate(possible_alpha): #For every character in this alphabet, remove any alphabets that dont line up with this
+                    if char == "-": continue
+                    #print(f"MAIN CHARACTER TO CHECK FOR IS {char}\n")
+                    #print("The current number of possibilities = " + str(len(hitler_alpha_set2)))
+
+                    #print(hitler_alpha_set)
+                    for i in hitler_alpha_set:
+                        if not i in hitler_alpha_set2:
+                            #print("Irrelevant alphabet")
+                            continue
+                        #print("\nInspecting alphabet: ",end="")
+                        #print(i)
+                        #print(f"Specifically, {i[pos]}")
+
+                        if i[pos]!=char:
+                            #print("Inconsistency, removing alphabet if present")
+                            hitler_alpha_set2.remove(i)
+                        else:
+                            print("Consistent, maintaining alphabet")
+                #print("\nFinal possiblities for an alphabet:")
+                #print(hitler_alpha_set2)
+                final_possible_sols.append(hitler_alpha_set2)
+            
+            print(final_possible_sols)
+
+def seperators(self,string: str,keyLength: int) -> list:
     newArray = ["" for i in range(keyLength)]
 
     for index in range(keyLength):
         newArray[index] = string[index::keyLength]
     return newArray
-def sinkov(string,min_period=1, max_period=30):
+def sinkov(self,string,min_period=1, max_period=30):
     ENGLISH_IOC = 0.0667
     IoC_variances = {}
     
@@ -161,7 +207,7 @@ def sinkov(string,min_period=1, max_period=30):
 
     for period in range(min_period,max_period+1):
         partitions = seperators(string,period)
-        total_IoC = sum([cipherTools.ic(partition) for partition in partitions])
+        total_IoC = sum([self.IoC.ic(partition) for partition in partitions])
         avg_IoC = total_IoC/len(partitions)
 
         IoC_variance = ENGLISH_IOC-avg_IoC
@@ -175,6 +221,4 @@ def sinkov(string,min_period=1, max_period=30):
     return {"key" : best_key, "full_data" : sorted_variances}
 
 cipher = GOD_cipher()
-print(sinkov("JROQLDBCVZTQRSGMXQHHZGESKLOSOTLOHEIFZOFOYJLENIFTHQFFBPHOHFCFDUSFDNKBGQLZBDIRHMKXTMDQSQYELDBHRYCHEFJRMTFCJCXRBUGTRCTHCVBSQJWEUIGNJWOWQCUYIHGPJPMFLYQJPNBTMHMXXTBEOSQYPMDCXFNIFUOMXSBMWGUIXMCHIGNXMCCHCVZQIVDRWUBMWKLKOIFUABDYQIVSHPVFBZAFVOQQUHPPGOBEBFFRLWCBOFUFDUSFDNKBGASPGOIVQJCLEIHVFFCLWHQJRI",1,12))
-print(cipher.decrypt("martian","TNMPHRVYTPVYXRPXPANIZWMXPXJZTTSMSECQUPBBATTRRNXTHZADCYOJLIWTYRVYCXXJOJGIPCVKKIRRBYBHZGNZLSACRQLIORPNCCUASYTNBBCZQGVMHWZTQFRGWHDNSEYECQGVNYASAGSRNDVTKXLHJZGIRTXNTHESLJFHZASXZT"))
-
+print(cipher.auto_solve_crib("IVYANDTHECAN",period=None,text="JROQLDBCVZTQRSGMXQHHZGESKLOSOTLOHEIFZOFOYJLENIFTHQFFBPHOHFCFDUSFDNKBGQLZBDIRHMKXTMDQSQYELDBHRYCHEFJRMTFCJCXRBUGTRCTHCVBSQJWEUIGNJWOWQCUYIHGPJPMFLYQJPNBTMHMXXTBEOSQYPMDCXFNIFUOMXSBMWGUIXMCHIGNXMCCHCVZQIVDRWUBMWKLKOIFUABDYQIVSHPVFBZAFVOQQUHPPGOBEBFFRLWCBOFUFDUSFDNKBGASPGOIVQJCLEIHVFFCLWHQJRI"))

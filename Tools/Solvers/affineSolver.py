@@ -8,9 +8,6 @@ sys.path.append(modulesPath)
 
 import cipherTools
 
-#Editable toggles and shit
-cosine_calc = cipherTools.what_the_fuck_was_madness_thinking()
-
 class AffineCipher():
     def __setattr__(self, name, value):
         if name == "multiplier":
@@ -21,6 +18,8 @@ class AffineCipher():
         
         super().__setattr__(name,value)
     def __init__(self, shift = None, multiplier = 1, additive = 0,rawString = None):
+        self.cosine_calc = cipherTools.what_the_fuck_was_madness_thinking()
+
         self.possibleMultis = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
 
         if shift != None:
@@ -100,7 +99,7 @@ class AffineCipher():
                 for key,item in VectDecrypt.items():
                     VectDecrypt[key.upper()] = item/total
 
-                score = cosine_calc.cosine(VectDecrypt)["Cosine"]
+                score = self.cosine_calc.cosine(VectDecrypt)["Cosine"]
 
                 if score > best_cosine:
                     best_cosine = score
@@ -147,36 +146,37 @@ class AffineCipher():
                     self.multiplier, self.additive = oldA, oldB
         raise Exception("Unsolvable via cribs!")
 
-string = """
-TSLCZFRCEFRPECCETNUMDTQCLKCVFRMWTQGFMGLNFBLBDCELBDCTHDMQFQN
-LQNLCEDCQFFQLRQWLYNCDQWNTQNCLDWELYLTNDIFXLVEZWTWCELHETHXLQH
-YFNNCELBFLSTRNNCYTUCFPLCCFCELNDBLNTWL
-"""
-
-ReverseString = False # me when ciphertext was reversed :(
-decipherData = {
-    "Ready" : False,
-    "AutoSolve" : True,
-    "clean_plaintext" : True
-}
-
-
-result = ""
-
-for char in string:
-    if char.isalpha() or char == " ":
-        result+=char
-string = result
-
-if ReverseString:
-    string = string[::-1]
-
-RED = "\033[91m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
-
-print(f"String length: {len(string)}")
 if __name__ == "__main__":
+    string = """
+    TSLCZFRCEFRPECCETNUMDTQCLKCVFRMWTQGFMGLNFBLBDCELBDCTHDMQFQN
+    LQNLCEDCQFFQLRQWLYNCDQWNTQNCLDWELYLTNDIFXLVEZWTWCELHETHXLQH
+    YFNNCELBFLSTRNNCYTUCFPLCCFCELNDBLNTWL
+    """
+
+    ReverseString = False # me when ciphertext was reversed :(
+    decipherData = {
+        "Ready" : False,
+        "AutoSolve" : True,
+        "clean_plaintext" : True
+    }
+
+
+    result = ""
+
+    for char in string:
+        if char.isalpha() or char == " ":
+            result+=char
+    string = result
+
+    if ReverseString:
+        string = string[::-1]
+
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    RESET = "\033[0m"
+
+    print(f"String length: {len(string)}")
+
     if decipherData["Ready"]:
         args = {
             "string" : string,

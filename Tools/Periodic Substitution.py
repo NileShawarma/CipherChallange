@@ -12,6 +12,7 @@ class Periodic_Substitution():
     def __init__(self):
         self.alphabets = []
         self.raw_string = "hello this is a dummy message, what's your thoughts on pancakes"
+        self.IoC = cipherTools.IoC()
     def add_alphabet(self,alphabet):
         self.alphabets.append(alphabet)
     def clear(self):
@@ -29,7 +30,7 @@ class Periodic_Substitution():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = seperators(text,len(alphabets))
+        partitions = cipherTools.seperators(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []
@@ -61,7 +62,7 @@ class Periodic_Substitution():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = seperators(text,len(alphabets))
+        partitions = cipherTools.seperators(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []
@@ -81,32 +82,6 @@ class Periodic_Substitution():
             for part_index in range(len(plaintext_parts)):
                 plaintext+=plaintext_parts[part_index][index]
         return plaintext
-def seperators(string: str,keyLength: int) -> list:
-    newArray = ["" for i in range(keyLength)]
 
-    for index in range(keyLength):
-        newArray[index] = string[index::keyLength]
-    return newArray
-def sinkov(string,min_period=1, max_period=30):
-    ENGLISH_IOC = 0.0667
-    IoC_variances = {}
-    
-    best_key = 1
-    best_variance = float("inf")
-
-    for period in range(min_period,max_period+1):
-        partitions = seperators(string,period)
-        total_IoC = sum([cipherTools.ic(partition) for partition in partitions])
-        avg_IoC = total_IoC/len(partitions)
-
-        IoC_variance = ENGLISH_IOC-avg_IoC
-        
-        IoC_variances[str(period)] = abs(IoC_variance)
-        
-        if abs(IoC_variance)<best_variance:
-            best_key = period
-            best_variance = abs(IoC_variance)
-    sorted_variances = (sorted(IoC_variances.items(), key=lambda thingy: thingy[1]))
-    return {"key" : best_key, "full_data" : sorted_variances}
 
 

@@ -1,137 +1,293 @@
 from collections import Counter
 import os 
 import sys
+import affineSolver
 
 script_dir = os.path.dirname(__file__)
 modulesPath = os.path.join(script_dir,"..","..","Test","Modules")
+toolsPath = os.path.join(script_dir,"..")
 sys.path.append(modulesPath)
+sys.path.append(toolsPath)
 
 import cipherTools
-from cipherTools import Affineshift,recommendedShiftChiSquared,ic,chiSquared,recommendedShiftFrequencyAnalysis # type: ignore
+import IoC_graph
 
-#Editable toggles and shit
-string = """
-ZCZCO IBLSQ YFVMY IWPZP YSXDC JZOJX DYHZK AHIWQ FVYIW EIVCN VASBU OEZWJ IZXTA DYHZD VWPFO KIBYW PSFPS INGBX KAHEY ANBVX ELUKY NWOSF VIBYP FOKDU EPGGW KEJNM AKRRG WQSVF RREDW KGRVA WCLGV PHIBF GGLWR CKRRV HCGJC PVQNI CYHWX SGZXR WOKSE KEISG ZCSAK PMSOZ YSERW EQNRU YBUKY PELJV XGMKL GNSGL JMDRI ZIJRT FBGLA MFZQV RWRCI KAHSC FVWNM JWCLB FYNCG KQHEN YBKOR SBBIV BRGKK DVXFI NCBVQ BXEYH ZXTSQ PRVKY AEJZF XYCOJ CNYHV LPCXB RWOYB USSSP FSICT IPUWE NBJPF WJYCT KPHLX VXUWC LBVWG JCJSA KATSI IGLEL UPYHL WTSEO TSPGO KOQAE RVLCV XEQCW DUIDG UYOFX EKDFB GEJAS KRNXS CQFXP PQBSK RVWOR OXOBJ KSFTY YPWZC IKGMK LOJAH MYIZP KFTKQ GZLYI UMIYK IIPMZ UEFXD YHUSF THYBE SAKPM AVOGA ERVKR RTNCG ZNRRP QCFXN RZMBT OUIDY GRCFY NYBTO GLWRH YOTSR CFEWR RPQIG ZBVPQ VZCCP WLHYS AKOUW CVZSR CJVBL UQGQB VLMYY BEYGT NMAZC RXKFC CNZCE LJVCG SNQHF QRXDC FZPGL AWHYS AOPFS ZBVRP CFVCG WWPSS OGXAP GVBII ZCZJO JLAPS JYJMJ LWEQG LAGFW SEQYM ADSGQ ALHEY JMOGB RVYSQ PWEDR VAQHJ SGMOA FLMVE HRVRD LSQYB USPSJ TWEMR XDCAF PGLAT OCERS BRVZC CVKNS IDLEJ BMFEN VAZSJ DCPWA SUDBE YOIZB RXDCS MSQIJ ASWYE YOGII QRCKS HFLRK XMFIY JSNQH VKYEY MBTVH WETSU OZSJQ HIKGM KLCWD UIRYZ LOBJP FSGBB HQAHF BGSLP CMSQI WDICV RVZCG TBVTP GCEYS XDCDC YGMJM FUOEX DYHZM NRBGB RVYCL CFJEN HAKMW BVIJB GKYPS IKWKD BFWAY ZXTYO WCLBF EJVWF EFPUK CCSAE NM
-""".upper()
-ReverseString = False # me when ciphertext was reversed :(
-keyLength = 7
-decipherData = {
-    "Ready" : True,
-    "AutoSolve" : True,
-    "recommendShift" : "chi",
-    "AffineOrCaesar": "Caesar" #when this is affine its basically quagmire II
-}
-decryptionReady = True
-AutoICData = {
-    "DoAutoIC" : False,
-    "StartKey" : 2,
-    "MaxKey" : 33
-}
+class VigenereCipher():
+    def __setattr__(self, name, value):
+        if name == "multiplier" and hasattr(self, 'possibleMultis'):
+            final_multi = value.copy()
 
-string = string.replace(" ","").replace("\n","")
-res = ""
-for char in string:
-    if char.isalpha():
-        res+=char
-string = res
-if ReverseString:
-    string = string[::-1]
+            for val in value: #check if its a valid key
+                if val in self.possibleMultis:
+                    pass
+                else:
+                    raise Exception("Multiplier is not invertible!")
+            
+            
+            for i in range(len(self.additives)-len(final_multi)): #the multiplier key should be the same length as the adding key, so we just pad it with 1s (identity mutliplier)
+                final_multi.append(1)
+            super().__setattr__(name,final_multi)
+            return
+        
+        super().__setattr__(name,value)
+    def __init__(self, text = "", multipliers = [1], key = "A", opt_args = {
+        "CaesarOrAffine" : "Caesar",  "StartKey" : 2,  "MaxKey" : 30
+    }):
+        self.possibleMultis = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+        
+        self.raw_string = text
+        self.additives = cipherTools.key_to_num(key)
+        self.multiplier = multipliers
 
-RED = "\033[91m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
+        self.AffineCipher = affineSolver.AffineCipher()
+        self.IoC = cipherTools.IoC()
 
-print(f"String length: {len(string)}")
 
-def seperators(string: str,keyLength: int) -> list:
-    newArray = ["" for i in range(keyLength)]
+        for arg, value in {"CaesarOrAffine" : "Caesar",  "StartKey" : 2,  "MaxKey" : 30}.items():
+            self.__setattr__(arg,value)
+        for arg, value in opt_args.items():
+            self.__setattr__(arg, value)
+    def encrypt(self, multipliers = None , key = None, text = None):
+        additives, text = self.additives if key == None else cipherTools.key_to_num(key), self.raw_string if text == None else text
+        multipliers = [1] if multipliers==None else multipliers
 
-    for index in range(keyLength):
-        newArray[index] = string[index::keyLength]
+        old_add = self.additives
+        old_multi = self.multiplier
+        self.additives = additives #cleaning the multi relies on an updated additive
+        self.multiplier = multipliers
 
-    return newArray
-def shift(text: str,s: int) -> str:
-    return Affineshift(text,[1,s])
-def recommendedShift(args: dict, mode = "chi")-> int:
-    match mode:
-        case "frequency":
-            return recommendedShiftFrequencyAnalysis(args["string"],args["info"])
-        case "chi":
-            return recommendedShiftChiSquared(args["string"],args["info"])
-print(seperators("hello",2))
-input()
-seperatedText = seperators(string,keyLength)
+        multipliers = self.multiplier #cleans the multiplier for us <3
+        self.multiplier = old_multi
+        self.additives = old_add
 
-if AutoICData["DoAutoIC"]:
-    for i in range(AutoICData["StartKey"],AutoICData["MaxKey"]):
-        seperatedText = seperators(string,i)
-        print(f"Key: {i}")
-        seperatedText[0] = shift(seperatedText[0],0).lower()
-        seperatedText[1] = shift(seperatedText[1],0).lower()
-        seperatedText.append("hi")
-        chiSquared(seperatedText[0])
-        print(f"IC No1: {round(ic(seperatedText[0]),8)}, IC No2 : {round(ic(seperatedText[1]),8)}, IC No3 : {round(ic(seperatedText[2]),8)}")
+        text = text.replace(" ","").upper()
+        period = len(additives)
+        partitioned_text = cipherTools.seperators(text,period)
 
-decryptionKey = ""
-if decryptionReady:
-    seperatedText = seperators(string,keyLength)
-    for i,block in enumerate(seperatedText):
-        typeShift = decipherData["AffineOrCaesar"]
-        args = {
-            "string" : block,
-            "info" : True,
-            "CaesarOrAffine": typeShift
-        }
-        if not decipherData["AutoSolve"]:
-            RecommendedShift = recommendedShift(args, decipherData["recommendShift"])
-            if typeShift=="Caesar":
-                shiftNum = (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")) 
+        for i,part in enumerate(partitioned_text):
+            self.AffineCipher.additive, self.AffineCipher.multiplier = additives[i],multipliers[i]
+            partitioned_text[i] = self.AffineCipher.encrypt(part)
+        
+        plaintext = ""
+        for i in range(sum([len(part) for part in partitioned_text])):
+            character = partitioned_text[i%period][i//period]
+            
+            plaintext += character
+
+        return plaintext  
+    def decrypt(self,multipliers = None , key = None, text = None):
+        additives, text = self.additives if key == None else cipherTools.key_to_num(key), self.raw_string if text == None else text
+        multipliers = [1] if multipliers==None else multipliers
+
+
+        old_add = self.additives
+        old_multi = self.multiplier
+        self.additives = additives #cleaning the multi relies on an updated additive
+        self.multiplier = multipliers
+
+        multipliers = self.multiplier #cleans the multiplier for us <3
+        self.multiplier = old_multi
+        self.additives = old_add
+
+
+        text = text.replace(" ","").upper()
+        period = len(additives)
+        partitioned_text = cipherTools.seperators(text,period)
+
+        for i,part in enumerate(partitioned_text):
+            self.AffineCipher.additive, self.AffineCipher.multiplier = additives[i],multipliers[i]
+            print(f"Add: {self.AffineCipher.additive}, Multi : {self.AffineCipher.multiplier}")
+            partitioned_text[i] = self.AffineCipher.decrypt(part)
+        
+        plaintext = ""
+        for i in range(sum([len(part) for part in partitioned_text])):
+            character = partitioned_text[i%period][i//period]
+            
+            plaintext += character
+
+        return plaintext  
+     
+    def auto_solve(self, text = None, period = None, verbose = True):
+        text = self.raw_string if text==None else text
+        period = self.IoC.sinkov_first_past_the_post(text, self.StartKey, self.MaxKey)["key"] if period == None else period #determine period
+
+        seperatedText = cipherTools.seperators(text,period)
+
+        affineCipher = self.AffineCipher #vig cipher is the biggest caesar wrapper ive ever seen
+        encryptionKey = ""
+
+        for i,block in enumerate(seperatedText):
+            typeShift = self.CaesarOrAffine
+            
+            if typeShift == "Caesar":
+                affineCipher.possibleMultis = [1]
+                shiftNum = affineCipher.auto_solve(block)["key"]
+
+            elif typeShift == "Affine":
+                affineCipher.possibleMultis =  [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+                shiftNum = affineCipher.auto_solve(block)["key"]
+                        
+            affineCipher.multiplier, affineCipher.additive = shiftNum
+            seperatedText[i] = affineCipher.decrypt(block).lower()   
+
+            encryptionKey+=str(shiftNum[1])+"|"
+            decryptionMulti = shiftNum[0]
+            if verbose:  print(f"Block {i+1} shift: {str(shiftNum)}")
+        
+
+        if verbose:
+            RED = "\033[91m"
+            BLUE = "\033[94m"
+            RESET = "\033[0m"
+            
+            result = ""
+            for subkey in encryptionKey.split("|"):
+                if subkey!="-" and subkey!="":
+                    result+=chr(int(subkey)+65)
+                else:
+                    result+="-"
+            result = result[:-1]
+            result2 = ""
+            for subkey in encryptionKey.split("|"):
+                if subkey!="-" and subkey!="":
+                    if subkey=="0": result2+="A"
+                    else:result2+=chr((97+26)-int(subkey)).upper()
+                else:
+                    result2+="-"
+            result2 = result2[:-1]
+
+            print(f"\n\n{BLUE}Multiplier of: {decryptionMulti}")
+            print(f"{RED}Encryption key: {result}\nCaesar Equiv: {encryptionKey}\nDecryption Key: {result2}{RESET}")
+
+        return {"decrypt" : self.decrypt(key=result,text=text), "key" : result}
+    def auto_solve_crib(self):
+        pass
+if __name__ == "__main__":
+
+    string = """
+    XSIDIJAICIFLRVIWIEXVTPQMDIVLEWPOPRTVLRPWUBRTRSEFTPLQBAUHWPJ
+    XEZXWSSGPQUIPRAYEBWSIPAVMLHEFIEHJWMRIZBRRPQHJBXSEOIEMETRQGB
+    FTZWUXVHRZJOEZILTVQWNERTXDINGHZXTIEBRQPMQNMMGIYEGMICW
+    """.replace("\n","").replace(" ","")
+
+    vig = VigenereCipher()
+    print(cipherTools.key_to_num("ELEMERT"))
+    print(vig.auto_solve(text=string))
+
+    input()
+    #Editable toggles and shit
+    
+    ReverseString = False # me when ciphertext was reversed :(
+    keyLength = None
+    decipherData = {
+        "Ready" : True,
+        "AutoSolve" : True,
+        "AffineOrCaesar": "Affine" #when this is affine its basically quagmire II
+    }
+    decryptionReady = True
+    AutoICData = {
+        "DoAutoIC" : True,
+        "StartKey" : 2,
+        "MaxKey" : 33
+    }
+
+    string = string.replace(" ","").replace("\n","")
+    res = ""
+    for char in string:
+        if char.isalpha():
+            res+=char
+    string = res
+    if ReverseString:
+        string = string[::-1]
+
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    RESET = "\033[0m"
+
+    print(f"String length: {len(string)}")
+
+    input("Press enter to continue > ")
+
+    if AutoICData["DoAutoIC"]:
+        IoC_graph.gen_ioc_graph(string,AutoICData["StartKey"],AutoICData["MaxKey"])
+        keyLength = int(input("Enter a key length, 0 for automated pick: "))
+        if keyLength == 0:
+            keyLength = None
+
+    if keyLength == None:
+        keyLength = cipherTools.IoC().sinkov_first_past_the_post(string,2,12)["key"]
+
+    encryptionKey = ""
+    if decryptionReady:
+        seperatedText = cipherTools.seperators(string,keyLength)
+        affineCipher = affineSolver.AffineCipher()
+        for i,block in enumerate(seperatedText):
+            typeShift = decipherData["AffineOrCaesar"]
+            args = {
+                "string" : block,
+                "info" : True,
+                "CaesarOrAffine": typeShift
+            }
+            if not decipherData["AutoSolve"]:
+                RecommendedShift = ",".join(affineCipher.auto_solve()["key"])
+                if typeShift=="Caesar":
+                    shiftNum = (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")) 
+                else:
+                    shiftNum = [int(i) for i in (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")).split(",")]
             else:
-                shiftNum = [int(i) for i in (input(f"Shift value for block {i} (Recommended shift: {RecommendedShift} via frequency analysis): ")).split(",")]
-        else:
-            shiftNum = recommendedShift(args, decipherData["recommendShift"])
-        if shiftNum or shiftNum==0 or len(shiftNum)>1:
-            if typeShift=="Caesar":
-                seperatedText[i] = shift(block,int(shiftNum[1])).lower()
+                if typeShift == "Caesar":
+                    affineCipher.possibleMultis = [1]
+                    shiftNum = affineCipher.auto_solve(block)["key"]
+
+                elif typeShift == "Affine":
+                    affineCipher.possibleMultis =  [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]
+                    shiftNum = affineCipher.auto_solve(block)["key"]
+                        
+            if shiftNum or shiftNum==0 or len(shiftNum)>1:
+                affineCipher.multiplier, affineCipher.additive = shiftNum
+                seperatedText[i] = affineCipher.decrypt(block).lower()   
+
+                encryptionKey+=str(shiftNum[1])+"|"
+                decryptionMulti = shiftNum[0]
+                print(f"Block {i+1} shift: {str(shiftNum)}")
             else:
-                seperatedText[i] = Affineshift(block,shiftNum).lower()   
-            decryptionKey+=str(shiftNum[1])+"|"
-        else:
-            decryptionKey+="-"+"|"
+                encryptionKey+="-"+"|"
 
 
-#Converts key into words and stuff if its caesar cus i hab no idea how to do it for affine
-if typeShift == "Caesar":
-    print("beep")
+    newString = ""
+    plaintext = ""
+    if decipherData["Ready"]:
+        for i in range(len(string)):
+            if (i%keyLength)==0: 
+                print(newString)
+                newString = ""
+            character = seperatedText[i%keyLength][i//keyLength]
+            if character.isupper():
+                newString += RED + character + RESET
+            else:
+                newString += BLUE + character + RESET
+                plaintext += character
+        print(newString)
+
+    #Converts key into words and stuff
+
     result = ""
-    for subkey in decryptionKey.split("|"):
+    for subkey in encryptionKey.split("|"):
         if subkey!="-" and subkey!="":
-            result+=chr(int(subkey)+97)
+            result+=chr(int(subkey)+65)
         else:
             result+="-"
+    result = result[:-1]
     result2 = ""
-    for subkey in decryptionKey.split("|"):
+    for subkey in encryptionKey.split("|"):
         if subkey!="-" and subkey!="":
             if subkey=="0": result2+="A"
             else:result2+=chr((97+26)-int(subkey)).upper()
         else:
             result2+="-"
+    result2 = result2[:-1]
 
-    print(f"\n\n{RED}Decryption key: {result}\nCaesar Equiv: {decryptionKey}\nEncryption Key: {result2}{RESET}")
+    print(f"\n\n{BLUE}Multiplier of: {decryptionMulti}")
+    print(f"{RED}Encryption key: {result}\nCaesar Equiv: {encryptionKey}\nDecryption Key: {result2}{RESET}")
 
-newString = ""
-plaintext = ""
-if decipherData["Ready"]:
-    for i in range(len(string)):
-        if (i%keyLength)==0: 
-            print(newString)
-            newString = ""
-        character = seperatedText[i%keyLength][i//keyLength]
-        if character.isupper():
-            newString += RED + character + RESET
-        else:
-            newString += BLUE + character + RESET
-            plaintext += character
-    print(newString)
-    
-print(" ".join(cipherTools.clean_plaintext(plaintext)))
+    print(" ".join(cipherTools.clean_plaintext(plaintext)))

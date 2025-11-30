@@ -147,7 +147,90 @@ class what_the_fuck_was_madness_thinking():
         angle = math.acos(angle_cosine)
         
         return {"Angle" : angle, "Cosine" : angle_cosine}
+class IoC():
+    def __init__(self):
+        pass
+    def ic(self,text, mode : int = 1, overlap = False):
+        pattern_length = 1
 
+        if mode>1:
+            pattern_length = mode
+
+        if pattern_length < 1:
+            return 0.0
+
+        text = text.replace(" ","").upper()
+
+        if overlap:
+            partitioned_text = [text[i:i+pattern_length] for i in range(len(text) - pattern_length + 1)]
+        else:
+            partitioned_text = [text[pattern_length*i:pattern_length*(i+1)] for i in range(len(text)//pattern_length)]
+
+        freqs = Counter(partitioned_text)
+        length = len(partitioned_text)
+
+
+        ioc = sum([value*(value-1) for value in freqs.values()])/(length*(length-1))
+        return ioc
+    def sinkov(self,string,min_period=1, max_period=30):
+        ENGLISH_IOC = 0.0667
+        IoC_variances = {}
+        
+        best_key = 1
+        best_variance = float("inf")
+
+        for period in range(min_period,max_period+1):
+            partitions = seperators(string,period)
+            total_IoC = sum([self.ic(partition) for partition in partitions])
+            avg_IoC = total_IoC/len(partitions)
+
+            IoC_variance = ENGLISH_IOC-avg_IoC
+            
+            IoC_variances[str(period)] = abs(IoC_variance)
+            
+            if abs(IoC_variance)<best_variance:
+                best_key = period
+                best_variance = abs(IoC_variance)
+        sorted_variances = (sorted(IoC_variances.items(), key=lambda thingy: thingy[1]))
+        return {"key" : best_key, "full_data" : sorted_variances}
+    def sinkov_first_past_the_post(self,string,min_period=1,max_period=30):
+        ENGLISH_IOC = 0.0667 *26
+        IoC_variances = {}
+        
+        best_key = 1
+        best_variance = float("inf")
+        
+        threshold_ioc, first_passed = 1.5, None
+
+        for period in range(min_period,max_period+1):
+            partitions = seperators(string,period)
+            total_IoC = sum([self.ic(partition) for partition in partitions])
+
+            avg_IoC = (total_IoC/len(partitions)) * 26 #normalised ioc gonna have to get used to this cus madness's book basically only uses normalised iocs
+
+            IoC_variance = ENGLISH_IOC-avg_IoC
+            
+            IoC_variances[str(period)] = abs(IoC_variance)
+
+            if avg_IoC >= threshold_ioc:
+                first_passed = [period,total_IoC]
+                best_key = first_passed[0]
+
+                break
+            
+            if abs(IoC_variance)<best_variance:
+                best_key = period
+                best_variance = abs(IoC_variance)
+
+        sorted_variances = (sorted(IoC_variances.items(), key=lambda thingy: thingy[1]))
+
+        return {"key" : best_key, "full_data" : sorted_variances}
+def seperators(string: str,keyLength: int) -> list:
+    newArray = ["" for i in range(keyLength)]
+
+    for index in range(keyLength):
+        newArray[index] = string[index::keyLength]
+    return newArray
 def frequencyAnalysis(string: str) -> dict:
     freqs = Counter(string)
     print(sorted(freqs.items(), key=lambda thingy: thingy[0]))
@@ -238,21 +321,6 @@ def recommendedShiftChiSquared(string: str, info = False) -> int:
         print(allChis[2])
 
     return minChi[1]
-def ic(text, mode : int = 1):
-    pattern_length = 1
-
-    if mode>1:
-        pattern_length = mode
-        
-    text = text.replace(" ","").upper()
-    partitioned_text = [text[i*pattern_length:i*pattern_length+pattern_length] for i in range(len(text)//pattern_length)]
-
-    freqs = Counter(partitioned_text)
-    length = len(partitioned_text)
-
-
-    ioc = sum([value*(value-1) for value in freqs.values()])/(length*(length-1))
-    return ioc
 
 def inverseText(string: str) -> str:
     result = ""
@@ -260,7 +328,17 @@ def inverseText(string: str) -> str:
         keyCode = 90-(ord(char)-65)
         result += chr(keyCode)
     return result
-
+def key_to_num(string: str):
+    num_arr = []
+    string = string.upper()
+    for char in string:
+        num_arr.append(ord(char)-65)
+    return num_arr
+def num_to_key(num_arr: list):
+    key = ""
+    for num in num_arr:
+        key += chr(65+num)
+    return key
 def random_insert_from_corpus(corpus,text_length : int = 500) -> str:
     contents = corpus
     pos = random.randint(0,len(contents))
