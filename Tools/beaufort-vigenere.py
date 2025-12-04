@@ -56,7 +56,7 @@ RESET = "\033[0m"
 
 print(f"String length: {len(string)}")
 
-def seperators(string: str,keyLength: int) -> list:
+def column_seperation(string: str,keyLength: int) -> list:
     newArray = ["" for i in range(keyLength)]
 
     for index in range(keyLength):
@@ -72,14 +72,14 @@ def recommendedShift(args: dict, mode = "chi")-> list:
         case "chi":
             return recommendedShiftChiSquared(args["string"],args["info"])
 string = inverseText(string)
-seperatedText = seperators(string,keyLength)
+seperatedText = column_seperation(string,keyLength)
 print(string)
 
 IoC = cipherTools.IoC()
 
 if AutoICData["DoAutoIC"]:
     for i in range(AutoICData["StartKey"],AutoICData["MaxKey"]):
-        seperatedText = seperators(string,i)
+        seperatedText = column_seperation(string,i)
         print(f"Key: {i}")
         seperatedText[0] = shift(seperatedText[0],0).lower()
         seperatedText[1] = shift(seperatedText[1],0).lower()
@@ -88,7 +88,7 @@ if AutoICData["DoAutoIC"]:
         print(f"IC No1: {round(IoC.ic(seperatedText[0]),8)}, IC No2 : {round(IoC.ic(seperatedText[1]),8)}, IC No3 : {round(IoC.ic(seperatedText[2]),8)}")
 decryptionKey = ""
 if decryptionReady:
-    seperatedText = seperators(string,keyLength)
+    seperatedText = column_seperation(string,keyLength)
     for i,block in enumerate(seperatedText):
         args = {
             "string" : block,

@@ -180,7 +180,7 @@ class IoC():
         best_variance = float("inf")
 
         for period in range(min_period,max_period+1):
-            partitions = seperators(string,period)
+            partitions = column_seperation(string,period)
             total_IoC = sum([self.ic(partition) for partition in partitions])
             avg_IoC = total_IoC/len(partitions)
 
@@ -203,7 +203,7 @@ class IoC():
         threshold_ioc, first_passed = 1.5, None
 
         for period in range(min_period,max_period+1):
-            partitions = seperators(string,period)
+            partitions = column_seperation(string,period)
             total_IoC = sum([self.ic(partition) for partition in partitions])
 
             avg_IoC = (total_IoC/len(partitions)) * 26 #normalised ioc gonna have to get used to this cus madness's book basically only uses normalised iocs
@@ -225,7 +225,12 @@ class IoC():
         sorted_variances = (sorted(IoC_variances.items(), key=lambda thingy: thingy[1]))
 
         return {"key" : best_key, "full_data" : sorted_variances}
+
+#temporary till i change all usage of seperators to column seperation
 def seperators(string: str,keyLength: int) -> list:
+    return column_seperation(string, keyLength)
+
+def column_seperation(string: str,keyLength: int) -> list:
     newArray = ["" for i in range(keyLength)]
 
     for index in range(keyLength):

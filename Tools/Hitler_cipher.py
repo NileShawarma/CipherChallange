@@ -55,7 +55,7 @@ class GOD_cipher():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = seperators(text,len(alphabets))
+        partitions = column_seperation(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []
@@ -90,7 +90,7 @@ class GOD_cipher():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = seperators(text,len(alphabets))
+        partitions = column_seperation(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []
@@ -192,7 +192,7 @@ class GOD_cipher():
             
             print(final_possible_sols)
 
-def seperators(self,string: str,keyLength: int) -> list:
+def column_seperation(self,string: str,keyLength: int) -> list:
     newArray = ["" for i in range(keyLength)]
 
     for index in range(keyLength):
@@ -206,7 +206,7 @@ def sinkov(self,string,min_period=1, max_period=30):
     best_variance = float("inf")
 
     for period in range(min_period,max_period+1):
-        partitions = seperators(string,period)
+        partitions = column_seperation(string,period)
         total_IoC = sum([self.IoC.ic(partition) for partition in partitions])
         avg_IoC = total_IoC/len(partitions)
 

@@ -30,7 +30,7 @@ class Periodic_Substitution():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = cipherTools.seperators(text,len(alphabets))
+        partitions = cipherTools.column_seperation(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []
@@ -62,7 +62,7 @@ class Periodic_Substitution():
 
         text = text + "-"*(len(alphabets)-len(text)%len(alphabets))
 
-        partitions = cipherTools.seperators(text,len(alphabets))
+        partitions = cipherTools.column_seperation(text,len(alphabets))
 
         ALPHABET = string.ascii_uppercase
         plaintext_parts = []

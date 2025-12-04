@@ -24,7 +24,7 @@ def gen_ioc_graph(text : str, min_period = 1, max_period = 30):
 
     for period in range(IoCData["min_period"],IoCData["max_period"]+1):
 
-        partitions = cipherTools.seperators(IoCData["text"],period)
+        partitions = cipherTools.column_seperation(IoCData["text"],period)
         #rint(partitions)
         total_IoC = sum([IoC.ic(partition) for partition in partitions])/len(partitions) * 26
 

@@ -24,6 +24,7 @@ class Playfair():
 
             temp_key = ""
             temp_alpha = ALPHABET
+
             #how do you make a key :sob
             for char in key_copy:
                 if not char in temp_key:
@@ -80,7 +81,7 @@ class Playfair():
             newChar1, newChar2 = "",""
 
             if char1_pos[1] == char2_pos[1]: #Same column
-                row_number1,row_number2 = (char1_pos[0]+1) % size,(char2_pos[0]+1) % size
+                row_number1,row_number2 = (char1_pos[0]-1) % size,(char2_pos[0]+1) % size
                 column_number1, column_number2 = (char1_pos[1]) % size,(char2_pos[1]) % size
 
                 newChar1 = self.grid[row_number1][column_number1]
@@ -350,7 +351,7 @@ class PlayfairSolver():
                 break
 
 
-grid = Playfair()
+grid = Playfair(omission="J")
 grid.grid_size = 5
 
 alphabet = list(string.ascii_uppercase) #generate random key
@@ -360,12 +361,17 @@ for j in range(26):
     alphabet.remove(current_key[-1])
 print(f"Encryption Key is: {current_key}")
 
-grid.grid = grid.GeneratePlayfairGrid(fullKey=current_key)
+grid.grid = grid.GeneratePlayfairGrid(fullKey="GROCEISABDFHKLMNPQTUVWXYZ")
 grid.showGrid()
 
 plaintext = """
-My father’s family name being Pirrip, and my Christian name Philip, my infant tongue could make of both names nothing longer or more explicit than Pip. So, I called myself Pip, and came to be called Pip. I give Pirrip as my father’s family name, on the authority of his tombstone and my sister—Mrs. Joe Gargery, who married the blacksmith. As I never saw my father or my mother, and never saw any likeness of either of them (for their days were long before the days of photographs), my first fancies regarding what they were like were unreasonably derived from their tombstones. The shape of the letters on my father’s gave me an odd idea that he was a square, stout, dark man with curly black hair. From the character and turn of the inscription, “Also Georgiana Wife of the Above,” I drew a childish conclusion that my mother was freckled and sickly.
-""".upper()
+MDSOASOGTGKCDRBZEQVSKYMHFVIBDSKYMHCOROCEGODGABUICQMRORAOEAI
+HPEVFHPDMQCXCNDPUMRKBBPASZKGQPLABKENPNBVIQCASYQWBGZGUAEKYKB
+SHIQBUFSCPVLEQOEGUPBBNEQRFQYQCKSZGDCGUQSSIDCKGOGKRXZEQDKFVS
+AUCOCLNMRRCHWCMOBVFPDNBLVXCPEDRMHFVPDFVOVRCEAHRFSRLXCZMGQUQ
+BXKGGSOBPUNPMDSHQBUIFNSGDUDUDCOWGSRFYTCYMRDSLTRDBXARZRQGKDQ
+ITVPLFVOIASDPQWQRDRXCPEGECRVFEDPLCDSDMCBAIQDQPLCOBNVBOZURBY
+XCNURQBXNQWSEKQUTCIQAELTFICZEQSHOGHWGENLTMTCPLEKBAUNAEOW""".upper()
 plaintext = plaintext.replace(" ","").replace("\n","")
 
 sanitised_plaintext = ""
@@ -376,6 +382,6 @@ for char in plaintext:
 ciphertext = grid.encrypt(sanitised_plaintext)
 print(f"Ciphered text is: {ciphertext}")
 print(f"Text length: {len(ciphertext)}")
-
+print(grid.decrypt(sanitised_plaintext))
 playfair = PlayfairSolver()
 playfair.solve_playfair_constraints(playfair.constraints_from_known_text(sanitised_plaintext[:600],ciphertext[:600]))
